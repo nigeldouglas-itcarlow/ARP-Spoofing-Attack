@@ -1,6 +1,8 @@
 # ARP Spoofing Attack
 The Address Resolution Protocol (ARP) is a communication protocol used for discovering the link layer address, such as the MAC address, given an IP address. The ARP protocol is a very simple protocol, and it does not implement any security measure.
 
+![diagram](https://user-images.githubusercontent.com/126002808/220416965-09b077df-d999-478f-bdf3-78c42b4dcb50.png)
+
 ## ARP Request
 ```
 #!/usr/bin/env python3
