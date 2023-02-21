@@ -20,6 +20,17 @@ sendp(ethernet/arp)
 ```
 
 This script is using Scapy, a Python-based packet manipulation tool, to send an ARP reply packet. <br/>
+This script is using the Scapy library to create and send an Address Resolution Protocol (ARP) request packet.<br/> 
+
+An ARP request packet is used to discover the hardware address (MAC address) of a device on the same network by broadcasting a request to all devices on the network. The script creates two objects: <br/>
+
+1) an Ethernet object
+2) ARP object
+
+The Ethernet object is used to define the source and destination MAC addresses of the packet. <br/>
+The ARP object is used to define the operation code, source and destination IP addresses, and source and destination MAC addresses of the packet. <br/>
+<br/>
+The script then uses the print statement to display a message to the console indicating that Nigel is sending an ARP request. Finally, the script sends the packet using the sendp() function from the Scapy library.
 <br/>
 The first line ```#!/usr/bin/env python3``` is known as the shebang line.<br/>
 It tells the operating system to use the Python 3 interpreter to execute the script. <br/>
