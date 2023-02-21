@@ -19,7 +19,14 @@ print("Nigel is sending an ARP request")
 sendp(ethernet/arp) 
 ```
 
-This script uses the Scapy library to construct and send an ARP request packet. <br/>
+This script is using Scapy, a Python-based packet manipulation tool, to send an ARP reply packet. <br/>
+<br/>
+The first line ```#!/usr/bin/env python3``` is known as the shebang line.<br/>
+It tells the operating system to use the Python 3 interpreter to execute the script. <br/>
+<br/>
+The second line from ```scapy.all import *``` imports all of the classes and functions in the Scapy library. <br/>
+This allows the script to use Scapy to create, manipulate and send network packets. <br/>
+<br/>
 It first creates Ethernet and ARP objects to define the packet's source and destination addresses, as well as the IP addresses involved. <br/>
 It then prints the message ```"Nigel is sending an ARP request"``` before sending the packet using the ```sendp``` function.
 
@@ -40,19 +47,14 @@ print("Nigel is sending an ARP reply")
 sendp(ethernet/arp)  
 ```
 
-This script is using Scapy, a Python-based packet manipulation tool, to send an ARP reply packet. <br/>
-<br/>
-The first line ```#!/usr/bin/env python3``` is known as the shebang line.<br/>
-It tells the operating system to use the Python 3 interpreter to execute the script. <br/>
-<br/>
-The second line from ```scapy.all import *``` imports all of the classes and functions in the Scapy library. <br/>
-This allows the script to use Scapy to create, manipulate and send network packets. <br/>
-<br/>
-The next line creates an Ethernet frame with a specified source and destination MAC address. <br/>
-<br/>
+Similar to the first script, we create an Ethernet frame with a specified source and destination MAC address. <br/>
 The next line creates an ARP packet, with a specified source and destination MAC and IP addresses <br/>
 This specifies that it is an ARP reply packet by setting the ```'op'``` field to ```2.``` <br/>
 <br/>
 The line ```print("Nigel is sending an ARP reply")``` prints a message to the console stating that Nigel is sending an ARP reply packet. <br/>
 <br/>
 Finally, the ```sendp(ethernet/arp)``` function sends the Ethernet frame and ARP packet as a single packet over the network using Scapy's ```sendp()``` function.
+
+![arp-rep](https://user-images.githubusercontent.com/126002808/220423164-cff058a6-8371-4466-8461-b672a09df364.png)
+
+
