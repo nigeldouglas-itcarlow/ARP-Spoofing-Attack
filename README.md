@@ -69,3 +69,23 @@ Finally, the ```sendp(ethernet/arp)``` function sends the Ethernet frame and ARP
 ![arp-rep](https://user-images.githubusercontent.com/126002808/220423164-cff058a6-8371-4466-8461-b672a09df364.png)
 
 
+## Gratuitous ARP
+```
+#!/usr/bin/env python3
+from scapy.all import *
+
+# Create Ethernet and ARP objects
+ethernet = Ether(dst='02:42:0a:09:00:05', src='02:42:0a:09:00:69')
+arp = ARP(op=2, pdst='10.9.0.5', hwsrc='02:42:0a:09:00:69', hwdst='ff:ff:ff:ff:ff:ff', psrc='10.9.0.5')
+
+# Print the message that Nigel is sending a Gratuitous ARP message
+print("Nigel is sending a Gratuitous ARP message")
+
+# Send the packet
+sendp(ethernet/arp)
+```
+
+![grat-arp](https://user-images.githubusercontent.com/126002808/220428701-fd8a00ac-fefd-46bf-a947-6e7438630782.png)
+
+
+
