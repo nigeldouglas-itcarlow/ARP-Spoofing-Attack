@@ -203,6 +203,8 @@ To modify the previous script to replace every occurrence of a first name in the
 #!/usr/bin/env python3
 from scapy.all import *
 
+print ("Nigel will be removed as the first name")
+
 # Define the IP addresses and MAC addresses for Hosts A, B and M
 IP_A = "10.9.0.5"
 MAC_A = "02:42:0a:09:00:05"
@@ -254,3 +256,5 @@ In this modified script, I first define the IP addresses and MAC addresses for H
 We also define the first name to be replaced with a sequence of A's. <br/>
 <br/>
 The ```replace_firstname``` function takes the original data as input and replaces every occurrence of the first name with a sequence of A's of the same length. The ```spoof_pkt``` function intercepts the TCP packets exchanged between Host A and Host B communicating via netcat, replaces every occurrence of the first name with a sequence of A's, and forwards the modified packets to the destination. The ```sniff``` function is used to start sniffing the network traffic on the interface ```eth0```, and calls the ```spoof_pkt``` function for each intercepted packet that matches the specified filter.
+
+![netcat](https://user-images.githubusercontent.com/126002808/220471819-bedaa5cd-f555-469a-8801-3cb68b9293fe.png)
