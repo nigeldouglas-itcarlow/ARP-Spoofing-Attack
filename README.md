@@ -122,6 +122,14 @@ while True:
 
 ## Launching an  MitM Attack on Telnet
 
+The below code performs a Man-in-the-Middle (MitM) attack on Telnet traffic between two hosts, Host A and Host B. <br/>
+I do this by modifying the Telnet data in packets transmitted between them. <br/>
+<br/>
+The Python code again uses the Scapy library to capture and modify packets and the regular expression (re) module to manipulate the Telnet data.<br/>
+The script defines the IP and MAC addresses for hosts A, B, and M, sets up a packet capture filter to capture Telnet traffic from host A to host B, and defines a function that modifies the Telnet data in captured packets. <br/>
+<br/>
+When a packet that matches the filter is captured, the function is called to modify the Telnet data and send the modified packet to host B. <br/>
+Additionally, the code prints "Nigel is launching an MitM Attack on Telnet" to the console each time a packet is captured and modified.
 
 ```
 #!/usr/bin/env python3
