@@ -114,11 +114,15 @@ while True:
 
 ### With IP Forwarding Enabled
 
+![ip-forward-off](https://user-images.githubusercontent.com/126002808/220438539-3e69a4e5-ea23-459f-a3a4-0dd51d6bd9e6.png)
 
 ### With IP Forwarding Disabled
 
+![ip-forward-on](https://user-images.githubusercontent.com/126002808/220438591-160fc830-0bc4-4800-ab72-6b2cd609f1e7.png)
 
-Launching an  MitM Attack on Telnet
+## Launching an  MitM Attack on Telnet
+
+
 ```
 #!/usr/bin/env python3
 from scapy.all import *
