@@ -111,14 +111,19 @@ while True:
        send(arp_b) 
        time.sleep(5) 
 ```
+The script is sending ARP reply packets to both Host A and Host B continuously every 5 seconds. The ARP reply packets are being sent with the MAC address of Host M (host_m_mac) as the source MAC address and the IP address of the other target host as the source IP address.
 
 ### With IP Forwarding Enabled
 
 ![ip-forward-off](https://user-images.githubusercontent.com/126002808/220438539-3e69a4e5-ea23-459f-a3a4-0dd51d6bd9e6.png)
 
+If IP forwarding is enabled on Host M, it will forward the packets between Host A and Host B. Therefore, both Host A and Host B will receive the ARP reply packets sent by Host M. However, if IP forwarding is disabled on Host M, it will not forward the packets, and Host B will not receive the ARP reply packets sent by Host M. As a result, only Host A will receive the ARP reply packets in this case.
+
 ### With IP Forwarding Disabled
 
 ![ip-forward-on](https://user-images.githubusercontent.com/126002808/220438591-160fc830-0bc4-4800-ab72-6b2cd609f1e7.png)
+
+In summary, if IP forwarding is disabled on Host M, only Host A will receive the ARP reply packets, while if IP forwarding is enabled on Host M, both Host A and Host B will receive the ARP reply packets.
 
 ## Launching an  MitM Attack on Telnet
 
