@@ -90,7 +90,7 @@ sendp(ethernet/arp)
 
 # MITM Attack on Telnet using ARP Cache Poisoning
 
-The below script is conducting an ARP cache poisoning attack on both Host A and Host B. It sends out ARP reply packets spoofing Host M's MAC address as the MAC address for both Host A and Host B. This will cause Host A to associate Host M's MAC address with Host B's IP address and cause Host B to associate Host M's MAC address with Host A's IP address. As a result, all the packets sent between Host A and Host B will be intercepted by Host M. The while True loop sends the spoofed ARP packets every 5 seconds to ensure that the ARP cache of both Host A and Host B continues to be poisoned.
+Here is an example of a sniff-and-spoof program that intercepts TCP packets between Container A and Container B on the same LAN and replaces each typed character with a fixed character (Z):
 
 ```
 #!/usr/bin/env python3 
@@ -111,7 +111,7 @@ while True:
        send(arp_b) 
        time.sleep(5) 
 ```
-The script is sending ARP reply packets to both Host A and Host B continuously every 5 seconds. The ARP reply packets are being sent with the MAC address of Host M (host_m_mac) as the source MAC address and the IP address of the other target host as the source IP address.
+In this example, the program uses Scapy to sniff for TCP packets between Container A and Container B on the same LAN. If a TCP packet containing raw data is found, the program modifies the raw data by replacing each typed character with Z. Then, the program creates a new IP header with the source and destination IP addresses, a new TCP header with the source and destination port numbers, and a new packet with the spoofed IP and TCP headers and the modified raw data. Finally, the program sends the spoofed packet to Container B. The program is designed to run on an attacker container with the IP address of 10.9.0.105 and the MAC address of 02:42:0a:09:00:69. The network interface for sending the spoofed packet is set to 'eth0'.
 
 ### With IP Forwarding Enabled
 
