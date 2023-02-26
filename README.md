@@ -248,7 +248,7 @@ f = 'tcp'
 pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt)
 ```
 
-
+In this modified script, the ```subprocess``` module is used to start a netcat listener on Host B and send a netcat message from Host A to Host B. The ```spoof_pkt``` function is similar to the original script, but it modifies the payload of the packets using the replace method to replace "Nige" with a sequence of A's of the same length. The modified payload is then sent in a new packet using the ```send``` method.
 
 ### Second Attempt
 ```
