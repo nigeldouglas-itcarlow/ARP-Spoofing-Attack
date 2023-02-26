@@ -113,20 +113,20 @@ while True:
        time.sleep(5)
 ```
 
-### With IP Forwarding Enabled
+### With IP Forwarding Disabled
 
 ```
-sysctl net.ipv4.ip_forward=1
+sysctl net.ipv4.ip_forward=0
 ```
 
 ![ip-forward-off](https://user-images.githubusercontent.com/126002808/220438539-3e69a4e5-ea23-459f-a3a4-0dd51d6bd9e6.png)
 
 If IP forwarding is enabled on Host M, it will forward the packets between Host A and Host B. Therefore, both Host A and Host B will receive the ARP reply packets sent by Host M. However, if IP forwarding is disabled on Host M, it will not forward the packets, and Host B will not receive the ARP reply packets sent by Host M. As a result, only Host A will receive the ARP reply packets in this case.
 
-### With IP Forwarding Disabled
+### With IP Forwarding Enabled
 
 ```
-sysctl net.ipv4.ip_forward=0
+sysctl net.ipv4.ip_forward=1
 ```
 
 ![ip-forward-on](https://user-images.githubusercontent.com/126002808/220438591-160fc830-0bc4-4800-ab72-6b2cd609f1e7.png)
