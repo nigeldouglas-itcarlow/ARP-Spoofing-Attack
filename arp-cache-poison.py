@@ -2,6 +2,7 @@
 
 from scapy.all import *
 import time
+print ("Nigel sends A and B a packet every 5 secs")
 
 # Set the target IP addresses   
 target_a_ip = '10.9.0.5'  
