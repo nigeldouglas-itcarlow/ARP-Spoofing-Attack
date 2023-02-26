@@ -180,6 +180,9 @@ pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt)
 In this script, I added a newdata variable that contains the payload data consisting of a series of Z's. If the original payload data is not empty, it should use the length of the original payload data to generate a string of Z's with the same length. The script then replaces the original payload data with the new data and send the modified packet.
 
 
+![7](https://user-images.githubusercontent.com/126002808/221431228-eab37170-8e06-4a4d-aa82-efe635ee8a64.png)
+
+
 ## Launching an MitM Attack on Netcat
 
 The below code performs a Man-in-the-Middle (MitM) attack on ```Netcat``` traffic between two hosts, Host A and Host B. <br/>
