@@ -144,15 +144,11 @@ If IP forwarding is enabled on Host M, it will forward the packets between Host 
 
 In summary, if IP forwarding is disabled on Host M, only Host A will receive the ARP reply packets, while if IP forwarding is enabled on Host M, both Host A and Host B will receive the ARP reply packets.
 
-## Launching an  MitM Attack on Telnet
+## Launching an  MitM Attack on Netcat
 
-The below code performs a Man-in-the-Middle (MitM) attack on Telnet traffic between two hosts, Host A and Host B. <br/>
-I do this by modifying the Telnet data in packets transmitted between them. <br/>
+The below code performs a Man-in-the-Middle (MitM) attack on ```Netcat``` traffic between two hosts, Host A and Host B. <br/>
+I do this by modifying the ```Netcat``` data in packets transmitted between them. <br/>
 <br/>
-The Python code again uses the Scapy library to capture and modify packets and the regular expression (re) module to manipulate the Telnet data.The script defines the IP and MAC addresses for hosts A, B, and M, sets up a packet capture filter to capture Telnet traffic from host A to host B, and defines a function that modifies the Telnet data in captured packets. <br/>
-<br/>
-When a packet that matches the filter is captured, the function is called to modify the Telnet data and send the modified packet to host B. <br/>
-Additionally, the code prints "Nigel is launching an MitM Attack on Telnet" to the console each time a packet is captured and modified.
 
 ```
 #!/usr/bin/env python3
