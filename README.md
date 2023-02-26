@@ -182,6 +182,16 @@ In this script, I added a newdata variable that contains the payload data consis
 
 ![7](https://user-images.githubusercontent.com/126002808/221431228-eab37170-8e06-4a4d-aa82-efe635ee8a64.png)
 
+To achieve the above, a series of actions play out: <br/>
+<br/>
+1. Prepared ```3 windows``` that are shelled into ```container M``` and ```1 container``` shelled into ```container A```.
+2. Ran the ```ARP cache poisining``` script on ```container M```
+3. Enabled ```IP Forwarding``` on ```container M```
+4. Started a ```telnet session```on ```container A``` to connect to ```container B``` - via the command ```telnet 10.9.0.5```
+5. Disabled ```IP Forwarding``` on ```container M```
+6. Ran the ```MitM spoofing``` script on ```container M```
+7. Started typing random characters in the ```telnet session```on ```container A```
+8. SUCCESS: All characters started changing to Z.
 
 ## Launching an MitM Attack on Netcat
 
