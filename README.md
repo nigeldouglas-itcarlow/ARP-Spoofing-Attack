@@ -373,6 +373,12 @@ f = 'tcp and (host ' + IP_A + ' or host ' + IP_B + ')'
 pkt = sniff(iface='eth0', filter=f, prn=spoof_pkt)
 ```
 
+![AAAAA](https://user-images.githubusercontent.com/126002808/221714016-18f58539-357d-41af-b5fd-d9a136c583bc.png)
+
+
+
+
+
 In the modified script, the re module is imported to perform regular expression matching for replacing first names with A's. The ```spoof_pkt()``` function is modified to use a regular expression to find and replace first names with A's of the same length, using the ```re.sub()``` function. The f variable is modified to filter for TCP packets with either Host A or Host B as the source or destination address.<br/>
 <br/>
 In earlier tests, the ```replace_firstname``` function aimed to take the original data as input and replaces every occurrence of the first name with a sequence of A's of the same length. The ```spoof_pkt``` function would then attempt to intercept those TCP packets exchanged between Host A and Host B communicating via netcat, replacing every occurrence of the first name with a sequence of A's, and forwards the modified packets to the destination. The ```sniff``` function can then be used to start sniffing the network traffic on the interface ```eth0```, and calls the ```spoof_pkt``` function for each intercepted packet that matches the specified filter.
